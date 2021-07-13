@@ -8,6 +8,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
+#include <time.h>
 
 Display *dpy;
 Window root;
@@ -26,8 +28,8 @@ struct Color
     float g;
     float b;
 };
-    struct Color black = {0,0,0};
-    struct Color green = {0,1,0};
+struct Color black = { 0, 0, 0 };
+struct Color green = { 0, 1, 0 };
 struct Block
 {
     bool isBrick;
@@ -38,7 +40,7 @@ struct Block GameBoard[20][10];
 
 float x = 0;
 float y = 0;
-float speed = 10;
+float speed = 1;
 void DrawAQuad()
 {
     glClearColor(1.0, 1.0, 1.0, 1.0);
@@ -92,18 +94,31 @@ void RenderGameBoard()
 {
     for (size_t x = 0; x < 10; ++x) {
         for (size_t y = 0; y < 20; ++y) {
-            RenderBlock(GameBoard[y][x], x*BLOCK_SIZE, y*BLOCK_SIZE);
+            RenderBlock(GameBoard[y][x], x * BLOCK_SIZE, y * BLOCK_SIZE);
         }
     }
 }
+struct CurrentShape
+{
+    float x;
+    float y;
+    struct Color color;
+};
+struct Color red = { 1, 0, 0 };
 
-void InitGameBoard() {
+void RenderCurrentShape(struct CurrentShape current)
+{
+    DrawRect(red, current.x * BLOCK_SIZE, current.y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+}
+
+void InitGameBoard()
+{
     bool now = false;
     for (size_t x = 0; x < 10; ++x) {
         for (size_t y = 0; y < 20; ++y) {
             GameBoard[y][x].isBrick = false;
             GameBoard[y][x].color = now ? &black : &green;
-            now=!now;
+            now = !now;
         }
     }
 }
@@ -149,9 +164,20 @@ int main(int argc, char *argv[])
     int frame_counter = 0;
     InitGameBoard();
 
+    struct timeval start, stop, last;
+    double secs = 0;
 
+    gettimeofday(&start, NULL);
+    last = start;
+
+    struct CurrentShape player;
+    player.x = 3;
+    player.y = 5;
+    player.color = red;
 
     while (1) {
+        clock_t last_time;
+        last_time = clock();
         if (XPending(dpy) > 0) {
             XNextEvent(dpy, &xev);
 
@@ -175,29 +201,37 @@ int main(int argc, char *argv[])
                 printf("released %d %d %ld \n", xev.xkey.keycode, xev.xany.send_event, XLookupKeysym(&xev.xkey, 0));
             }
             printf("####### inside\n");
+            continue;
         } // end of the if
 
         if (isPressed(dpy, XK_period)) {
-            y += speed;
+            player.y += speed;
         }
         if (isPressed(dpy, XK_E)) {
-            y -= speed;
+            player.y -= speed;
         }
         if (isPressed(dpy, XK_O)) {
-            x -= speed;
+            player.x -= speed;
         }
         if (isPressed(dpy, XK_U)) {
-            x += speed;
+            player.x += speed;
         }
-        printf("it's frame %d and the key tab is %s\n", frame_counter, isPressed(dpy, XK_Tab) ? "pressed" : "not pressed");
 
         ClearScreen();
+        RenderCurrentShape(player);
+
         RenderGameBoard();
         //DrawRect(mycolor, 50, 50);
         glXSwapBuffers(dpy, win);
+        gettimeofday(&stop, NULL);
+        if (frame_counter % 60 == 0) {
+            double frames_avg = (double) (stop.tv_usec - start.tv_usec) / 1000000 + (double) (stop.tv_sec - start.tv_sec);
+            secs = (double) (stop.tv_usec - last.tv_usec) / 1000000 + (double) (stop.tv_sec - last.tv_sec);
+            last = stop;
+            printf("frame[%5d] took frame %f sec, frames avg %.2f\n", frame_counter, secs, frame_counter / frames_avg);
+            //printf("frame %d\n", frame_counter);
+            //XFlush(dpy);
+        }
         ++frame_counter;
-        //printf("frame %d\n", frame_counter);
-        //XFlush(dpy);
-
     } /* this closes while(1) { */
 } /* this is the } which closes int main(int argc, char *argv[]) { */

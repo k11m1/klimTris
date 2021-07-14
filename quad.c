@@ -98,17 +98,68 @@ void RenderGameBoard()
         }
     }
 }
+
+struct Shape
+{
+    int x, y; // rotation center
+    bool bitmap[4][4];
+};
+struct Shape T = { .bitmap = { { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 1, 1, 1, 0 }, { 0, 1, 0, 0 } } };
+
 struct CurrentShape
 {
-    float x;
-    float y;
-    struct Color color;
+    int x;
+    int y;
+    struct Shape *shape;
+    struct Block block;
 };
 struct Color red = { 1, 0, 0 };
+struct Block redBlock = {.isBrick = true, .color = &red};
 
 void RenderCurrentShape(struct CurrentShape current)
 {
-    DrawRect(red, current.x * BLOCK_SIZE, current.y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+    for (size_t x = 0; x < 4; ++x) {
+        for (size_t y = 0; y < 4; ++y) {
+            if (current.shape->bitmap[y][x]) {
+                DrawRect(red, (current.x + x) * BLOCK_SIZE, (current.y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            }
+        }
+    }
+}
+bool check_no_collision(struct CurrentShape current) {
+    for (size_t x = 0; x < 4; ++x) {
+        for (size_t y = 0; y < 4; ++y) {
+            if (current.shape->bitmap[y][x]) {
+                if (GameBoard[current.y +y][current.x +x].isBrick) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+
+}
+
+void imprint(struct CurrentShape current) {
+    for (size_t x = 0; x < 4; ++x) {
+        for (size_t y = 0; y < 4; ++y) {
+            if (current.shape->bitmap[y][x]) {
+                GameBoard[current.y +y][current.x +x] = current.block;
+           }
+        }
+    }
+
+}
+
+void moveShape(struct CurrentShape *current)
+{
+    current->y--;
+    if (check_no_collision(*current)) {
+    } else {
+        current->y++;
+        imprint(*current);
+    }
+      
 }
 
 void InitGameBoard()
@@ -117,10 +168,12 @@ void InitGameBoard()
     for (size_t x = 0; x < 10; ++x) {
         for (size_t y = 0; y < 20; ++y) {
             GameBoard[y][x].isBrick = false;
-            GameBoard[y][x].color = now ? &black : &green;
+            GameBoard[y][x].color = &black;
             now = !now;
         }
     }
+    GameBoard[0][0].isBrick = true;
+    GameBoard[0][0].color = &green;
 }
 
 int main(int argc, char *argv[])
@@ -171,9 +224,10 @@ int main(int argc, char *argv[])
     last = start;
 
     struct CurrentShape player;
-    player.x = 3;
-    player.y = 5;
-    player.color = red;
+    player.x = 4;
+    player.y = 10;
+    player.block = redBlock;
+    player.shape = &T;
 
     while (1) {
         clock_t last_time;
@@ -190,6 +244,13 @@ int main(int argc, char *argv[])
 
             else if (xev.type == KeyPress) {
                 printf("PRESS EVENT REGISTERED !!!!!! %d %d %ld \n", xev.xkey.keycode, xev.xany.send_event, XLookupKeysym(&xev.xkey, 0));
+                if (xev.xkey.keycode == 32) {
+                    player.x -= speed;
+                }
+
+                if (xev.xkey.keycode == 30) {
+                    player.x += speed;
+                }
                 if (xev.xkey.keycode == 24) {
                     glXMakeCurrent(dpy, None, NULL);
                     glXDestroyContext(dpy, glc);
@@ -210,12 +271,6 @@ int main(int argc, char *argv[])
         if (isPressed(dpy, XK_E)) {
             player.y -= speed;
         }
-        if (isPressed(dpy, XK_O)) {
-            player.x -= speed;
-        }
-        if (isPressed(dpy, XK_U)) {
-            player.x += speed;
-        }
 
         ClearScreen();
         RenderCurrentShape(player);
@@ -224,6 +279,16 @@ int main(int argc, char *argv[])
         //DrawRect(mycolor, 50, 50);
         glXSwapBuffers(dpy, win);
         gettimeofday(&stop, NULL);
+
+        double frames_avg = (double) (stop.tv_usec - start.tv_usec) / 1000000 + (double) (stop.tv_sec - start.tv_sec);
+        secs = (double) (stop.tv_usec - last.tv_usec) / 1000000 + (double) (stop.tv_sec - last.tv_sec);
+        printf("frame[%5d] took frame %f sec, frames avg %.2f\n", frame_counter, secs, frame_counter / frames_avg);
+        if (secs > 1) {
+            last = stop;
+            moveShape(&player);
+            // TODO check collisions
+        }
+        /*     
         if (frame_counter % 60 == 0) {
             double frames_avg = (double) (stop.tv_usec - start.tv_usec) / 1000000 + (double) (stop.tv_sec - start.tv_sec);
             secs = (double) (stop.tv_usec - last.tv_usec) / 1000000 + (double) (stop.tv_sec - last.tv_sec);
@@ -231,7 +296,7 @@ int main(int argc, char *argv[])
             printf("frame[%5d] took frame %f sec, frames avg %.2f\n", frame_counter, secs, frame_counter / frames_avg);
             //printf("frame %d\n", frame_counter);
             //XFlush(dpy);
-        }
+        }*/
         ++frame_counter;
     } /* this closes while(1) { */
 } /* this is the } which closes int main(int argc, char *argv[]) { */

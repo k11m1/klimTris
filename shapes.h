@@ -23,5 +23,10 @@ struct Shape
 
 extern struct Shape T;
 extern struct Shape I;
+extern struct Shape S;
+extern struct Shape Z;
+extern struct Shape L;
+extern struct Shape J;
+extern struct Shape O;
 
-extern struct Shape *Shapes[2];
+extern struct Shape *Shapes[7];

@@ -180,7 +180,7 @@ void InitGameBoard()
 
 void NewPiece(struct CurrentShape *current)
 {
-    current->shape = Shapes[rand() % 2];
+    current->shape = Shapes[rand() % 7];
     current->x = 4;
     current->y = 16;
     current->numState = 0;

@@ -25,18 +25,12 @@ GLXContext glc;
 XWindowAttributes gwa;
 XEvent xev;
 
-struct Color
-{
-    float r;
-    float g;
-    float b;
-};
 struct Color black = { 0, 0, 0 };
 struct Color green = { 0, 1, 0 };
 struct Block
 {
     bool isBrick;
-    struct Color *color;
+    struct Color color;
 };
 
 struct Block GameBoard[20][10];
@@ -90,7 +84,7 @@ void DrawRect(struct Color color, float x, float y, float width, float height)
 #define BLOCK_SIZE 32
 void RenderBlock(struct Block block, float x, float y)
 {
-    DrawRect(*block.color, x, y, BLOCK_SIZE, BLOCK_SIZE);
+    DrawRect(block.color, x, y, BLOCK_SIZE, BLOCK_SIZE);
 }
 
 void RenderGameBoard()
@@ -108,17 +102,19 @@ struct CurrentShape
     int y;
     short numState;
     struct Shape *shape;
-    struct Block block;
 };
+void NewPiece(struct CurrentShape *current);
 struct Color red = { 1, 0, 0 };
-struct Block redBlock = { .isBrick = true, .color = &red };
 
 void RenderCurrentShape(struct CurrentShape current)
 {
     for (size_t x = 0; x < 4; ++x) {
-        for (size_t y = 0; y < 4; ++y) {
+        for (int y = 3; y >= 0; --y) {
             if (current.shape->bitmap[current.numState][y][x]) {
-                DrawRect(red, (current.x + x) * BLOCK_SIZE, (current.y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                int new_x = current.x + x; //+ current.shape->center[current.numState].x;
+                int new_y = current.y + y; //+ current.shape->center[current.numState].y;
+
+                DrawRect(current.shape->color, new_x * BLOCK_SIZE, new_y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
             }
         }
     }
@@ -142,7 +138,8 @@ void imprint(struct CurrentShape current)
     for (size_t x = 0; x < 4; ++x) {
         for (size_t y = 0; y < 4; ++y) {
             if (current.shape->bitmap[current.numState][y][x]) {
-                GameBoard[current.y + y][current.x + x] = current.block;
+                GameBoard[current.y + y][current.x + x].isBrick = true;
+                GameBoard[current.y + y][current.x + x].color = current.shape->color;
             }
         }
     }
@@ -155,21 +152,38 @@ void moveShape(struct CurrentShape *current)
     } else {
         current->y++;
         imprint(*current);
+        NewPiece(current);
     }
 }
 
 void InitGameBoard()
 {
+    int i, n;
+    time_t t;
+
+    n = 5;
+
+    /* Intializes random number generator */
+    srand((unsigned) time(&t));
+
     bool now = false;
     for (size_t x = 0; x < 10; ++x) {
         for (size_t y = 0; y < 20; ++y) {
             GameBoard[y][x].isBrick = false;
-            GameBoard[y][x].color = &black;
+            GameBoard[y][x].color = black;
             now = !now;
         }
     }
     GameBoard[0][0].isBrick = true;
-    GameBoard[0][0].color = &green;
+    GameBoard[0][0].color = green;
+}
+
+void NewPiece(struct CurrentShape *current)
+{
+    current->shape = Shapes[rand() % 2];
+    current->x = 4;
+    current->y = 16;
+    current->numState = 0;
 }
 
 int main(int argc, char *argv[])
@@ -220,11 +234,7 @@ int main(int argc, char *argv[])
     last = start;
 
     struct CurrentShape player;
-    player.x = 4;
-    player.y = 10;
-    player.block = redBlock;
-    player.shape = &T;
-    player.numState = 0;
+    NewPiece(&player);
 
     while (1) {
         clock_t last_time;
@@ -250,12 +260,15 @@ int main(int argc, char *argv[])
                 }
                 if (xev.xkey.keycode == 33) {
                     player.numState = (player.numState + 1) % 4;
+                    printf("current center pos: %d %d\n", player.shape->center[player.numState].x, player.shape->center[player.numState].y);
+                    printf("current total pos: %d %d\n", player.shape->center[player.numState].x + player.x, player.shape->center[player.numState].y);
                 }
                 if (xev.xkey.keycode == 60) {
                     player.y += 1;
                 }
                 if (xev.xkey.keycode == 26) {
-                    player.y -= 1;
+                    moveShape(&player);
+                    /* player.y -= 1; */
                 }
                 if (xev.xkey.keycode == 24) {
                     glXMakeCurrent(dpy, None, NULL);
@@ -287,7 +300,7 @@ int main(int argc, char *argv[])
 
         double frames_avg = (double) (stop.tv_usec - start.tv_usec) / 1000000 + (double) (stop.tv_sec - start.tv_sec);
         secs = (double) (stop.tv_usec - last.tv_usec) / 1000000 + (double) (stop.tv_sec - last.tv_sec);
-        printf("frame[%5d] took frame %f sec, frames avg %.2f\n", frame_counter, secs, frame_counter / frames_avg);
+        /* printf("frame[%5d] took frame %f sec, frames avg %.2f\n", frame_counter, secs, frame_counter / frames_avg); */
         if (secs > 1) {
             last = stop;
             moveShape(&player);

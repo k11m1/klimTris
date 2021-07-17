@@ -11,6 +11,9 @@
 #include <sys/time.h>
 #include <time.h>
 
+#include "shapes.h"
+/* #include "shapes.c" */
+
 Display *dpy;
 Window root;
 GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
@@ -99,56 +102,50 @@ void RenderGameBoard()
     }
 }
 
-struct Shape
-{
-    int x, y; // rotation center
-    bool bitmap[4][4];
-};
-struct Shape T = { .bitmap = { { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 1, 1, 1, 0 }, { 0, 1, 0, 0 } } };
-
 struct CurrentShape
 {
     int x;
     int y;
+    short numState;
     struct Shape *shape;
     struct Block block;
 };
 struct Color red = { 1, 0, 0 };
-struct Block redBlock = {.isBrick = true, .color = &red};
+struct Block redBlock = { .isBrick = true, .color = &red };
 
 void RenderCurrentShape(struct CurrentShape current)
 {
     for (size_t x = 0; x < 4; ++x) {
         for (size_t y = 0; y < 4; ++y) {
-            if (current.shape->bitmap[y][x]) {
+            if (current.shape->bitmap[current.numState][y][x]) {
                 DrawRect(red, (current.x + x) * BLOCK_SIZE, (current.y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
             }
         }
     }
 }
-bool check_no_collision(struct CurrentShape current) {
+bool check_no_collision(struct CurrentShape current)
+{
     for (size_t x = 0; x < 4; ++x) {
         for (size_t y = 0; y < 4; ++y) {
-            if (current.shape->bitmap[y][x]) {
-                if (GameBoard[current.y +y][current.x +x].isBrick) {
+            if (current.shape->bitmap[current.numState][y][x]) {
+                if (GameBoard[current.y + y][current.x + x].isBrick) {
                     return false;
                 }
             }
         }
     }
     return true;
-
 }
 
-void imprint(struct CurrentShape current) {
+void imprint(struct CurrentShape current)
+{
     for (size_t x = 0; x < 4; ++x) {
         for (size_t y = 0; y < 4; ++y) {
-            if (current.shape->bitmap[y][x]) {
-                GameBoard[current.y +y][current.x +x] = current.block;
-           }
+            if (current.shape->bitmap[current.numState][y][x]) {
+                GameBoard[current.y + y][current.x + x] = current.block;
+            }
         }
     }
-
 }
 
 void moveShape(struct CurrentShape *current)
@@ -159,7 +156,6 @@ void moveShape(struct CurrentShape *current)
         current->y++;
         imprint(*current);
     }
-      
 }
 
 void InitGameBoard()
@@ -228,6 +224,7 @@ int main(int argc, char *argv[])
     player.y = 10;
     player.block = redBlock;
     player.shape = &T;
+    player.numState = 0;
 
     while (1) {
         clock_t last_time;
@@ -251,6 +248,15 @@ int main(int argc, char *argv[])
                 if (xev.xkey.keycode == 30) {
                     player.x += speed;
                 }
+                if (xev.xkey.keycode == 33) {
+                    player.numState = (player.numState + 1) % 4;
+                }
+                if (xev.xkey.keycode == 60) {
+                    player.y += 1;
+                }
+                if (xev.xkey.keycode == 26) {
+                    player.y -= 1;
+                }
                 if (xev.xkey.keycode == 24) {
                     glXMakeCurrent(dpy, None, NULL);
                     glXDestroyContext(dpy, glc);
@@ -261,16 +267,15 @@ int main(int argc, char *argv[])
             } else if (xev.type == KeyRelease) {
                 printf("released %d %d %ld \n", xev.xkey.keycode, xev.xany.send_event, XLookupKeysym(&xev.xkey, 0));
             }
-            printf("####### inside\n");
             continue;
         } // end of the if
 
-        if (isPressed(dpy, XK_period)) {
-            player.y += speed;
-        }
-        if (isPressed(dpy, XK_E)) {
-            player.y -= speed;
-        }
+        /* if (isPressed(dpy, XK_period)) { */
+        /*     player.y += speed; */
+        /* } */
+        /* if (isPressed(dpy, XK_E)) { */
+        /*     player.y -= speed; */
+        /* } */
 
         ClearScreen();
         RenderCurrentShape(player);

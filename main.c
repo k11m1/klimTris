@@ -162,13 +162,8 @@ void moveShape(struct CurrentShape *current)
 
 void InitGameBoard()
 {
-    int i, n;
-    time_t t;
-
-    n = 5;
-
     /* Intializes random number generator */
-    srand((unsigned) time(&t));
+    srand((unsigned) time(NULL));
 
     for (size_t x = 0; x < 10; ++x) {
         for (size_t y = 0; y < 20; ++y) {

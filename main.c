@@ -253,10 +253,16 @@ int main(int argc, char *argv[])
                 printf("PRESS EVENT REGISTERED !!!!!! %d %d %ld \n", xev.xkey.keycode, xev.xany.send_event, XLookupKeysym(&xev.xkey, 0));
                 if (xev.xkey.keycode == 32) {
                     player.x -= speed;
+                    if (!check_no_collision(player)) {
+                        player.x += speed;
+                    }
                 }
 
                 if (xev.xkey.keycode == 30) {
                     player.x += speed;
+                    if (!check_no_collision(player)) {
+                        player.x -= speed;
+                    }
                 }
                 if (xev.xkey.keycode == 33) {
                     player.numState = (player.numState + 1) % 4;

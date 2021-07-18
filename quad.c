@@ -71,10 +71,6 @@ void DrawRect(struct Color color, float x, float y, float width, float height)
 {
     glBegin(GL_QUADS);
     glColor3f(color.r, color.g, color.b);
-    //glVertex3f(-.75 + x, -.75 + y, 0.);
-    //glVertex3f(.75 + x, -.75 + y, 0.);
-    //glVertex3f(.75 + x, .75 + y, 0.);
-    //glVertex3f(-.75 + x, .75 + y, 0.);
     glVertex3f(x, y, 0.);
     glVertex3f(width + x, y, 0.);
     glVertex3f(width + x, height + y, 0.);
@@ -121,9 +117,17 @@ void RenderCurrentShape(struct CurrentShape current)
 }
 bool check_no_collision(struct CurrentShape current)
 {
-    for (size_t x = 0; x < 4; ++x) {
-        for (size_t y = 0; y < 4; ++y) {
+    for (int x = 0; x < 4; ++x) {
+        for (int y = 0; y < 4; ++y) {
             if (current.shape->bitmap[current.numState][y][x]) {
+                printf("current y = %d; x = %d\n", current.y + y, current.x + x);
+                if (current.y + y < 0) {
+                    return false;
+                }
+                if (current.x + x < 0 || current.x + x >= 10) {
+                    return false;
+                }
+
                 if (GameBoard[current.y + y][current.x + x].isBrick) {
                     return false;
                 }
@@ -166,16 +170,12 @@ void InitGameBoard()
     /* Intializes random number generator */
     srand((unsigned) time(&t));
 
-    bool now = false;
     for (size_t x = 0; x < 10; ++x) {
         for (size_t y = 0; y < 20; ++y) {
             GameBoard[y][x].isBrick = false;
             GameBoard[y][x].color = black;
-            now = !now;
         }
     }
-    GameBoard[0][0].isBrick = true;
-    GameBoard[0][0].color = green;
 }
 
 void NewPiece(struct CurrentShape *current)

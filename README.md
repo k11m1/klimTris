@@ -1,4 +1,4 @@
-# KlimTris
+# KlimTris [WIP]
 
 Personal experiment to practise programming.
 

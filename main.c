@@ -14,6 +14,8 @@
 #include "shapes.h"
 /* #include "shapes.c" */
 
+#define BLOCK_SIZE 32
+
 Display *dpy;
 Window root;
 GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
@@ -77,7 +79,6 @@ void DrawRect(struct Color color, float x, float y, float width, float height)
     glVertex3f(x, height + y, 0.);
     glEnd();
 };
-#define BLOCK_SIZE 32
 void RenderBlock(struct Block block, float x, float y)
 {
     DrawRect(block.color, x, y, BLOCK_SIZE, BLOCK_SIZE);
@@ -181,6 +182,20 @@ void NewPiece(struct CurrentShape *current)
     current->numState = 0;
 }
 
+void do_wall_kick(struct CurrentShape *current)
+{
+    int direction = (current->x < 5) ? 1 : -1;
+
+    for (int i = 0; i < 3; ++i) {
+        current->x += direction;
+        if (check_no_collision(*current)) {
+            return;
+        }
+    }
+    current->x -= 3 * direction;
+    current->numState = (current->numState + 3) % 4;
+}
+
 int main(int argc, char *argv[])
 {
     dpy = XOpenDisplay(NULL);
@@ -259,14 +274,18 @@ int main(int argc, char *argv[])
                         player.x -= speed;
                     }
                 }
-                if (xev.xkey.keycode == 33) {
-                    player.numState = (player.numState + 1) % 4;
-                    printf("current center pos: %d %d\n", player.shape->center[player.numState].x, player.shape->center[player.numState].y);
-                    printf("current total pos: %d %d\n", player.shape->center[player.numState].x + player.x, player.shape->center[player.numState].y);
-                }
                 if (xev.xkey.keycode == 60) {
-                    player.y += 1;
+                    player.numState = (player.numState + 1) % 4;
+                    if (!check_no_collision(player)) {
+                        // TODO wall kick
+                        do_wall_kick(&player);
+                    }
+                    /* printf("current center pos: %d %d\n", player.shape->center[player.numState].x, player.shape->center[player.numState].y); */
+                    /* printf("current total pos: %d %d\n", player.shape->center[player.numState].x + player.x, player.shape->center[player.numState].y); */
                 }
+                /* if (xev.xkey.keycode == 60) { */
+                /*     player.y += 1; */
+                /* } */
                 if (xev.xkey.keycode == 26) {
                     moveShape(&player);
                     /* player.y -= 1; */

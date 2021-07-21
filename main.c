@@ -5,6 +5,7 @@
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -121,7 +122,7 @@ bool check_no_collision(struct CurrentShape current)
     for (int x = 0; x < 4; ++x) {
         for (int y = 0; y < 4; ++y) {
             if (current.shape->bitmap[current.numState][y][x]) {
-                printf("current y = %d; x = %d\n", current.y + y, current.x + x);
+                /* printf("current y = %d; x = %d\n", current.y + y, current.x + x); */
                 if (current.y + y < 0) {
                     return false;
                 }
@@ -174,12 +175,51 @@ void InitGameBoard()
     }
 }
 
+void moveLines(int to, int from)
+{
+    assert(to < from);
+    int target = to;
+    for (int y = from; y < 20; ++y) {
+        // TODO memcpy?
+        for (int x = 0; x < 10; x++) {
+            GameBoard[target][x] = GameBoard[y][x];
+        }
+        target++;
+    }
+}
+
+void clearLines(struct CurrentShape *current)
+{
+    int maximum_height = 20;
+    int cleared = 0;
+    int bottom_line = 0;
+    for (int i = 0; i < maximum_height; i++) {
+        int x = 0;
+        for (; x < 10; x++) {
+            if (!GameBoard[i][x].isBrick) {
+                break;
+            }
+        }
+        if (x == 10) {
+            moveLines(i, i + 1);
+            cleared++;
+            i--;
+            maximum_height--; // little optimization
+            // delete
+            // posunout
+        }
+    }
+    printf("CLEARED %d lines\n", cleared);
+}
+
 void NewPiece(struct CurrentShape *current)
 {
     current->shape = Shapes[rand() % 7];
+    /* current->shape = &I; */
     current->x = 4;
     current->y = 16;
     current->numState = 0;
+    clearLines(current);
 }
 
 void do_wall_kick(struct CurrentShape *current)

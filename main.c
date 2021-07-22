@@ -7,6 +7,7 @@
 #include <X11/keysym.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -57,6 +58,33 @@ void DrawAQuad()
     gluLookAt(0., 0., 10., 0., 0., 0., 0., 1., 0.);
 }
 
+void init_gl_render()
+{
+    uint8_t image[8 * 8 * 3] = {
+        0,
+    };
+    int counter = 0;
+    for (int x = 0; x < 8; x += 1) {
+        for (int y = 0; y < 8; y += 1) {
+            for (int channel = 0; channel < 3; ++channel) {
+                image[3 * (8 * y + x) + channel] = 255 - (3 * (8 * channel + x) + channel);
+                counter++;
+            }
+        }
+    }
+
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    /* glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); */
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    glGenerateMipmap(GL_TEXTURE_2D); // TODO LSP Implicit declaration of function 'glGenerateMipmap' is invalid in C99
+}
+
 bool isPressed(Display *dpy, KeySym ks)
 {
     char keys_return[32];
@@ -72,13 +100,19 @@ void ClearScreen()
 }
 void DrawRect(struct Color color, float x, float y, float width, float height)
 {
+    glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
     glColor3f(color.r, color.g, color.b);
+    glTexCoord2f(0.0f, 0.0f);
     glVertex3f(x, y, 0.);
+    glTexCoord2f(1.0f, 0.0f);
     glVertex3f(width + x, y, 0.);
+    glTexCoord2f(1.0f, 1.0f);
     glVertex3f(width + x, height + y, 0.);
+    glTexCoord2f(0.0f, 1.0f);
     glVertex3f(x, height + y, 0.);
     glEnd();
+    glDisable(GL_TEXTURE_2D);
 };
 void RenderBlock(struct Block block, float x, float y)
 {
@@ -276,6 +310,7 @@ int main(int argc, char *argv[])
     printf("GLSL Version %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
     int frame_counter = 0;
     InitGameBoard();
+    init_gl_render();
 
     struct timeval start, stop, last;
     double secs = 0;

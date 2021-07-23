@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include <time.h>
 
@@ -30,6 +31,30 @@ XWindowAttributes gwa;
 XEvent xev;
 bool GameOver = false;
 int score = 0;
+
+int keycodes[4] = { 113, 114, 111, 116 };
+
+void setDvorak()
+{
+    keycodes[0] = 32;
+    keycodes[1] = 30;
+    keycodes[2] = 60;
+    keycodes[3] = 26;
+}
+void setQwerty()
+{
+    keycodes[0] = 38;
+    keycodes[1] = 40;
+    keycodes[2] = 25;
+    keycodes[3] = 39;
+}
+void setArrows()
+{
+    keycodes[0] = 113;
+    keycodes[1] = 114;
+    keycodes[2] = 111;
+    keycodes[3] = 116;
+}
 
 struct Color black = { 0, 0, 0 };
 struct Color green = { 0, 1, 0 };
@@ -257,9 +282,39 @@ void do_wall_kick(struct CurrentShape *current)
     current->numState = (current->numState + 3) % 4;
 }
 
-/* int main(int argc, char *argv[]) */
-int main()
+void help()
 {
+    printf("keyboard options:\n");
+    printf("\t-q, --qwerty\t set qwerty keyboards\n");
+    printf("\t-d, --dvorak\t set dvorak keyboards\n");
+    printf("\t-a, --arrows\t set arrows keyboards\n");
+    printf("Default settings for playing is arrows\n");
+    printf("Use 'q' ingame to exit the game\n");
+    exit(0);
+}
+int main(int argc, char *argv[])
+{
+    if (argc > 2) {
+        fprintf(stderr, "UNRECOGNIZED OPTIONS!\nUse -h or --help for help\n");
+        exit(1);
+    }
+    if (argc > 1) {
+        if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+            help();
+        }
+        if (strcmp(argv[1], "-d") == 0 || strcmp(argv[1], "--dvorak") == 0) {
+            setDvorak();
+            printf("Dvorak bindings set!\nrotate - '.'\ndown - 'e'\nleft - 'o'\nright - 'u'\n");
+        }
+        if (strcmp(argv[1], "-q") == 0 || strcmp(argv[1], "--qwerty") == 0) {
+            setQwerty();
+            printf("Qwerty bindings set!\nrotate - 'w'\ndown - 's'\nleft - 'a'\nright - 'd'\n");
+        }
+        if (strcmp(argv[1], "-a") == 0 || strcmp(argv[1], "--arrows") == 0) {
+            setArrows();
+            printf("Qwerty bindings set!\nrotate - up arrow\ndown - down arrow\nleft - left arrow\nright - right arrow\n");
+        }
+    }
     dpy = XOpenDisplay(NULL);
 
     if (dpy == NULL) {
@@ -321,26 +376,26 @@ int main()
             }
 
             else if (xev.type == KeyPress) {
-                if (xev.xkey.keycode == 32) {
+                if (xev.xkey.keycode == keycodes[0]) {
                     player.x -= speed;
                     if (!check_no_collision(player)) {
                         player.x += speed;
                     }
                 }
 
-                if (xev.xkey.keycode == 30) {
+                if (xev.xkey.keycode == keycodes[1]) {
                     player.x += speed;
                     if (!check_no_collision(player)) {
                         player.x -= speed;
                     }
                 }
-                if (xev.xkey.keycode == 60) {
+                if (xev.xkey.keycode == keycodes[2]) {
                     player.numState = (player.numState + 1) % 4;
                     if (!check_no_collision(player)) {
                         do_wall_kick(&player);
                     }
                 }
-                if (xev.xkey.keycode == 26) {
+                if (xev.xkey.keycode == keycodes[3]) {
                     moveShape(&player);
                     secs = 0; // reset the drop down timer
                 }

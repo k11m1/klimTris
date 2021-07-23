@@ -29,6 +29,7 @@ GLXContext glc;
 XWindowAttributes gwa;
 XEvent xev;
 bool GameOver = false;
+int score = 0;
 
 struct Color black = { 0, 0, 0 };
 struct Color green = { 0, 1, 0 };
@@ -178,6 +179,7 @@ void moveShape(struct CurrentShape *current)
         imprint(*current);
         NewPiece(current);
     }
+    score++;
 }
 
 void InitGameBoard()
@@ -224,7 +226,9 @@ void clearLines()
             maximum_height--; // little optimization
         }
     }
-    printf("CLEARED %d lines\n", cleared);
+    if (cleared)
+        printf("CLEARED %d lines\n", cleared);
+    score += cleared * cleared * 50;
 }
 
 void NewPiece(struct CurrentShape *current)
@@ -345,11 +349,16 @@ int main()
                     glXDestroyContext(dpy, glc);
                     XDestroyWindow(dpy, win);
                     XCloseDisplay(dpy);
+                    printf("Score was %d\n", score);
                     exit(0);
                 }
             }
             continue;
         }
+        // set score
+        char title[32] = "KlimTris";
+        sprintf(title, "KlimTris [%d]", score);
+        XStoreName(dpy, win, title);
 
         ClearScreen();
         RenderCurrentShape(player);
@@ -367,4 +376,5 @@ int main()
         }
         ++frame_counter;
     }
+    printf("You have scored %d points!\n", score);
 }

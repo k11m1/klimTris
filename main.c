@@ -43,15 +43,19 @@ struct Block GameBoard[20][10];
 float x = 0;
 float y = 0;
 float speed = 1;
-void DrawAQuad()
+void ClearScreen()
 {
-    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClearColor(.2, .2, .2, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+void SetupGl()
+{
+    ClearScreen();
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    glOrtho(0.0f, 600.0f, 0.0f, 800.0f, 0.1f, 100.0f);
+    glOrtho(0.0f, 480.0f, 0.0f, 640.0f, 0.1f, 100.0f);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -92,11 +96,6 @@ bool isPressed(Display *dpy, KeySym ks)
     return !!(keys_return[kc2 >> 3] & (1 << (kc2 & 7)));
 }
 
-void ClearScreen()
-{
-    glClearColor(1.0, 1.0, 1.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
 void DrawRect(struct Color color, float x, float y, float width, float height)
 {
     glEnable(GL_TEXTURE_2D);
@@ -293,7 +292,7 @@ int main(int argc, char *argv[])
     swa.colormap = cmap;
     swa.event_mask = ExposureMask | KeyPressMask;
 
-    win = XCreateWindow(dpy, root, 0, 0, 600, 800, 0, vi->depth, InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
+    win = XCreateWindow(dpy, root, 0, 0, 480, 640, 0, vi->depth, InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
 
     XMapWindow(dpy, win);
     XStoreName(dpy, win, "KlimTris");
@@ -328,7 +327,7 @@ int main(int argc, char *argv[])
             if (xev.type == Expose) {
                 XGetWindowAttributes(dpy, win, &gwa);
                 glViewport(0, 0, gwa.width, gwa.height);
-                DrawAQuad();
+                SetupGl();
                 glXSwapBuffers(dpy, win);
             }
 

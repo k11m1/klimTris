@@ -64,19 +64,6 @@ void SetupGl()
 
 void init_gl_render()
 {
-    uint8_t image[8 * 8 * 3] = {
-        0,
-    };
-    int counter = 0;
-    for (int x = 0; x < 8; x += 1) {
-        for (int y = 0; y < 8; y += 2) {
-            for (int channel = 0; channel < 3; ++channel) {
-                image[3 * (8 * y + x) + channel] = 255;
-                counter++;
-            }
-        }
-    }
-
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -219,11 +206,10 @@ void moveLines(int to, int from)
     }
 }
 
-void clearLines(struct CurrentShape *current)
+void clearLines()
 {
     int maximum_height = 20;
     int cleared = 0;
-    int bottom_line = 0;
     for (int i = 0; i < maximum_height; i++) {
         int x = 0;
         for (; x < 10; x++) {
@@ -250,7 +236,7 @@ void NewPiece(struct CurrentShape *current)
     if (!check_no_collision(*current)) {
         GameOver = true;
     }
-    clearLines(current);
+    clearLines();
 }
 
 void do_wall_kick(struct CurrentShape *current)
@@ -267,7 +253,8 @@ void do_wall_kick(struct CurrentShape *current)
     current->numState = (current->numState + 3) % 4;
 }
 
-int main(int argc, char *argv[])
+/* int main(int argc, char *argv[]) */
+int main()
 {
     dpy = XOpenDisplay(NULL);
 
@@ -319,8 +306,6 @@ int main(int argc, char *argv[])
     NewPiece(&player);
 
     while (!GameOver) {
-        clock_t last_time;
-        last_time = clock();
         if (XPending(dpy) > 0) {
             XNextEvent(dpy, &xev);
 
@@ -373,7 +358,7 @@ int main(int argc, char *argv[])
         glXSwapBuffers(dpy, win);
         gettimeofday(&stop, NULL);
 
-        double frames_avg = (double) (stop.tv_usec - start.tv_usec) / 1000000 + (double) (stop.tv_sec - start.tv_sec);
+        // double frames_avg = (double) (stop.tv_usec - start.tv_usec) / 1000000 + (double) (stop.tv_sec - start.tv_sec);
         secs = (double) (stop.tv_usec - last.tv_usec) / 1000000 + (double) (stop.tv_sec - last.tv_sec);
         /* printf("frame[%5d] took frame %f sec, frames avg %.2f\n", frame_counter, secs, frame_counter / frames_avg); */
         if (secs > 1) {

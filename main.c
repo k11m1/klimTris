@@ -28,6 +28,7 @@ Window win;
 GLXContext glc;
 XWindowAttributes gwa;
 XEvent xev;
+bool GameOver = false;
 
 struct Color black = { 0, 0, 0 };
 struct Color green = { 0, 1, 0 };
@@ -247,6 +248,9 @@ void NewPiece(struct CurrentShape *current)
     current->x = 4;
     current->y = 16;
     current->numState = 0;
+    if (!check_no_collision(*current)) {
+        GameOver = true;
+    }
     clearLines(current);
 }
 
@@ -315,7 +319,7 @@ int main(int argc, char *argv[])
     struct CurrentShape player;
     NewPiece(&player);
 
-    while (1) {
+    while (!GameOver) {
         clock_t last_time;
         last_time = clock();
         if (XPending(dpy) > 0) {

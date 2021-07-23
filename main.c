@@ -1,4 +1,3 @@
-// -- Written in C -- //
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glx.h>
@@ -422,9 +421,8 @@ int main(int argc, char *argv[])
         glXSwapBuffers(dpy, win);
         gettimeofday(&stop, NULL);
 
-        // double frames_avg = (double) (stop.tv_usec - start.tv_usec) / 1000000 + (double) (stop.tv_sec - start.tv_sec);
         secs = (double) (stop.tv_usec - last.tv_usec) / 1000000 + (double) (stop.tv_sec - last.tv_sec);
-        /* printf("frame[%5d] took frame %f sec, frames avg %.2f\n", frame_counter, secs, frame_counter / frames_avg); */
+
         if (secs > 1) {
             last = stop;
             moveShape(&player);

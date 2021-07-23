@@ -329,7 +329,6 @@ int main(int argc, char *argv[])
             }
 
             else if (xev.type == KeyPress) {
-                printf("PRESS EVENT REGISTERED !!!!!! %d %d %ld \n", xev.xkey.keycode, xev.xany.send_event, XLookupKeysym(&xev.xkey, 0));
                 if (xev.xkey.keycode == 32) {
                     player.x -= speed;
                     if (!check_no_collision(player)) {
@@ -351,16 +350,15 @@ int main(int argc, char *argv[])
                 }
                 if (xev.xkey.keycode == 26) {
                     moveShape(&player);
+                    secs = 0; // reset the drop down timer
                 }
-                if (xev.xkey.keycode == 24) {
+                if (xev.xkey.keycode == 24) { // q - quit
                     glXMakeCurrent(dpy, None, NULL);
                     glXDestroyContext(dpy, glc);
                     XDestroyWindow(dpy, win);
                     XCloseDisplay(dpy);
                     exit(0);
                 }
-            } else if (xev.type == KeyRelease) {
-                printf("released %d %d %ld \n", xev.xkey.keycode, xev.xany.send_event, XLookupKeysym(&xev.xkey, 0));
             }
             continue;
         }

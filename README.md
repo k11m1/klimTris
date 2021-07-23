@@ -6,6 +6,8 @@ Libraries used: x11, gl, glu
 
 Supports dvorak layout.
 
+Score is shown only in the title.
+
 ## Controls
 
 ```

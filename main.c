@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <time.h>
 
+#include "brick.h"
 #include "shapes.h"
 /* #include "shapes.c" */
 
@@ -65,9 +66,9 @@ void init_gl_render()
     };
     int counter = 0;
     for (int x = 0; x < 8; x += 1) {
-        for (int y = 0; y < 8; y += 1) {
+        for (int y = 0; y < 8; y += 2) {
             for (int channel = 0; channel < 3; ++channel) {
-                image[3 * (8 * y + x) + channel] = 255 - (3 * (8 * channel + x) + channel);
+                image[3 * (8 * y + x) + channel] = 255;
                 counter++;
             }
         }
@@ -81,8 +82,9 @@ void init_gl_render()
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    glGenerateMipmap(GL_TEXTURE_2D); // TODO LSP Implicit declaration of function 'glGenerateMipmap' is invalid in C99
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 16, 16, 0, GL_RGB, GL_UNSIGNED_BYTE, image_data);
+    gluBuild2DMipmaps(GL_TEXTURE_2D, 3, 16, 16, GL_RGB, GL_UNSIGNED_BYTE, image_data);
+    //glGenerateMipmap(GL_TEXTURE_2D); // TODO LSP Implicit declaration of function 'glGenerateMipmap' is invalid in C99
 }
 
 bool isPressed(Display *dpy, KeySym ks)
@@ -103,13 +105,13 @@ void DrawRect(struct Color color, float x, float y, float width, float height)
     glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
     glColor3f(color.r, color.g, color.b);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(x, y, 0.);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(width + x, y, 0.);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(width + x, height + y, 0.);
     glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(x, y, 0.);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(width + x, y, 0.);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(width + x, height + y, 0.);
+    glTexCoord2f(0.0f, 0.0f);
     glVertex3f(x, height + y, 0.);
     glEnd();
     glDisable(GL_TEXTURE_2D);

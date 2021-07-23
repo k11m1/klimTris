@@ -15,7 +15,6 @@
 
 #include "brick.h"
 #include "shapes.h"
-/* #include "shapes.c" */
 
 #define BLOCK_SIZE 32
 
@@ -52,7 +51,6 @@ void DrawAQuad()
     glLoadIdentity();
 
     glOrtho(0.0f, 600.0f, 0.0f, 800.0f, 0.1f, 100.0f);
-    //glOrtho(-1., 1., -1., 1., 1., 20.);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -77,14 +75,12 @@ void init_gl_render()
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    /* glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); */
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 16, 16, 0, GL_RGB, GL_UNSIGNED_BYTE, image_data);
     gluBuild2DMipmaps(GL_TEXTURE_2D, 3, 16, 16, GL_RGB, GL_UNSIGNED_BYTE, image_data);
-    //glGenerateMipmap(GL_TEXTURE_2D); // TODO LSP Implicit declaration of function 'glGenerateMipmap' is invalid in C99
 }
 
 bool isPressed(Display *dpy, KeySym ks)
@@ -145,8 +141,8 @@ void RenderCurrentShape(struct CurrentShape current)
     for (size_t x = 0; x < 4; ++x) {
         for (int y = 3; y >= 0; --y) {
             if (current.shape->bitmap[current.numState][y][x]) {
-                int new_x = current.x + x; //+ current.shape->center[current.numState].x;
-                int new_y = current.y + y; //+ current.shape->center[current.numState].y;
+                int new_x = current.x + x;
+                int new_y = current.y + y;
 
                 DrawRect(current.shape->color, new_x * BLOCK_SIZE, new_y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
             }
@@ -158,7 +154,6 @@ bool check_no_collision(struct CurrentShape current)
     for (int x = 0; x < 4; ++x) {
         for (int y = 0; y < 4; ++y) {
             if (current.shape->bitmap[current.numState][y][x]) {
-                /* printf("current y = %d; x = %d\n", current.y + y, current.x + x); */
                 if (current.y + y < 0) {
                     return false;
                 }
@@ -241,8 +236,6 @@ void clearLines(struct CurrentShape *current)
             cleared++;
             i--;
             maximum_height--; // little optimization
-            // delete
-            // posunout
         }
     }
     printf("CLEARED %d lines\n", cleared);
@@ -251,7 +244,6 @@ void clearLines(struct CurrentShape *current)
 void NewPiece(struct CurrentShape *current)
 {
     current->shape = Shapes[rand() % 7];
-    /* current->shape = &I; */
     current->x = 4;
     current->y = 16;
     current->numState = 0;
@@ -354,18 +346,11 @@ int main(int argc, char *argv[])
                 if (xev.xkey.keycode == 60) {
                     player.numState = (player.numState + 1) % 4;
                     if (!check_no_collision(player)) {
-                        // TODO wall kick
                         do_wall_kick(&player);
                     }
-                    /* printf("current center pos: %d %d\n", player.shape->center[player.numState].x, player.shape->center[player.numState].y); */
-                    /* printf("current total pos: %d %d\n", player.shape->center[player.numState].x + player.x, player.shape->center[player.numState].y); */
                 }
-                /* if (xev.xkey.keycode == 60) { */
-                /*     player.y += 1; */
-                /* } */
                 if (xev.xkey.keycode == 26) {
                     moveShape(&player);
-                    /* player.y -= 1; */
                 }
                 if (xev.xkey.keycode == 24) {
                     glXMakeCurrent(dpy, None, NULL);
@@ -378,20 +363,12 @@ int main(int argc, char *argv[])
                 printf("released %d %d %ld \n", xev.xkey.keycode, xev.xany.send_event, XLookupKeysym(&xev.xkey, 0));
             }
             continue;
-        } // end of the if
-
-        /* if (isPressed(dpy, XK_period)) { */
-        /*     player.y += speed; */
-        /* } */
-        /* if (isPressed(dpy, XK_E)) { */
-        /*     player.y -= speed; */
-        /* } */
+        }
 
         ClearScreen();
         RenderCurrentShape(player);
 
         RenderGameBoard();
-        //DrawRect(mycolor, 50, 50);
         glXSwapBuffers(dpy, win);
         gettimeofday(&stop, NULL);
 
@@ -401,17 +378,7 @@ int main(int argc, char *argv[])
         if (secs > 1) {
             last = stop;
             moveShape(&player);
-            // TODO check collisions
         }
-        /*     
-        if (frame_counter % 60 == 0) {
-            double frames_avg = (double) (stop.tv_usec - start.tv_usec) / 1000000 + (double) (stop.tv_sec - start.tv_sec);
-            secs = (double) (stop.tv_usec - last.tv_usec) / 1000000 + (double) (stop.tv_sec - last.tv_sec);
-            last = stop;
-            printf("frame[%5d] took frame %f sec, frames avg %.2f\n", frame_counter, secs, frame_counter / frames_avg);
-            //printf("frame %d\n", frame_counter);
-            //XFlush(dpy);
-        }*/
         ++frame_counter;
-    } /* this closes while(1) { */
-} /* this is the } which closes int main(int argc, char *argv[]) { */
+    }
+}

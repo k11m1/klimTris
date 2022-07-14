@@ -33,22 +33,19 @@ int score = 0;
 
 int keycodes[4] = { 113, 114, 111, 116 };
 
-void setDvorak()
-{
+void setDvorak() {
     keycodes[0] = 32;
     keycodes[1] = 30;
     keycodes[2] = 60;
     keycodes[3] = 26;
 }
-void setQwerty()
-{
+void setQwerty() {
     keycodes[0] = 38;
     keycodes[1] = 40;
     keycodes[2] = 25;
     keycodes[3] = 39;
 }
-void setArrows()
-{
+void setArrows() {
     keycodes[0] = 113;
     keycodes[1] = 114;
     keycodes[2] = 111;
@@ -57,8 +54,7 @@ void setArrows()
 
 struct Color black = { 0, 0, 0 };
 struct Color green = { 0, 1, 0 };
-struct Block
-{
+struct Block {
     bool isBrick;
     struct Color color;
 };
@@ -68,13 +64,11 @@ struct Block GameBoard[20][10];
 float x = 0;
 float y = 0;
 float speed = 1;
-void ClearScreen()
-{
+void ClearScreen() {
     glClearColor(.2, .2, .2, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
-void SetupGl()
-{
+void SetupGl() {
     ClearScreen();
 
     glMatrixMode(GL_PROJECTION);
@@ -87,29 +81,29 @@ void SetupGl()
     gluLookAt(0., 0., 10., 0., 0., 0., 0., 1., 0.);
 }
 
-void init_gl_render()
-{
+void init_gl_render() {
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+        GL_NEAREST_MIPMAP_NEAREST);
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 16, 16, 0, GL_RGB, GL_UNSIGNED_BYTE, image_data);
-    gluBuild2DMipmaps(GL_TEXTURE_2D, 3, 16, 16, GL_RGB, GL_UNSIGNED_BYTE, image_data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 16, 16, 0, GL_RGB, GL_UNSIGNED_BYTE,
+        image_data);
+    gluBuild2DMipmaps(GL_TEXTURE_2D, 3, 16, 16, GL_RGB, GL_UNSIGNED_BYTE,
+        image_data);
 }
 
-bool isPressed(Display *dpy, KeySym ks)
-{
+bool isPressed(Display *dpy, KeySym ks) {
     char keys_return[32];
     XQueryKeymap(dpy, keys_return);
     KeyCode kc2 = XKeysymToKeycode(dpy, ks);
     return !!(keys_return[kc2 >> 3] & (1 << (kc2 & 7)));
 }
 
-void DrawRect(struct Color color, float x, float y, float width, float height)
-{
+void DrawRect(struct Color color, float x, float y, float width, float height) {
     glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
     glColor3f(color.r, color.g, color.b);
@@ -124,13 +118,11 @@ void DrawRect(struct Color color, float x, float y, float width, float height)
     glEnd();
     glDisable(GL_TEXTURE_2D);
 };
-void RenderBlock(struct Block block, float x, float y)
-{
+void RenderBlock(struct Block block, float x, float y) {
     DrawRect(block.color, x, y, BLOCK_SIZE, BLOCK_SIZE);
 }
 
-void RenderGameBoard()
-{
+void RenderGameBoard() {
     for (size_t x = 0; x < 10; ++x) {
         for (size_t y = 0; y < 20; ++y) {
             RenderBlock(GameBoard[y][x], x * BLOCK_SIZE, y * BLOCK_SIZE);
@@ -138,8 +130,7 @@ void RenderGameBoard()
     }
 }
 
-struct CurrentShape
-{
+struct CurrentShape {
     int x;
     int y;
     short numState;
@@ -148,21 +139,20 @@ struct CurrentShape
 void NewPiece(struct CurrentShape *current);
 struct Color red = { 1, 0, 0 };
 
-void RenderCurrentShape(struct CurrentShape current)
-{
+void RenderCurrentShape(struct CurrentShape current) {
     for (size_t x = 0; x < 4; ++x) {
         for (int y = 3; y >= 0; --y) {
             if (current.shape->bitmap[current.numState][y][x]) {
                 int new_x = current.x + x;
                 int new_y = current.y + y;
 
-                DrawRect(current.shape->color, new_x * BLOCK_SIZE, new_y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                DrawRect(current.shape->color, new_x * BLOCK_SIZE, new_y * BLOCK_SIZE,
+                    BLOCK_SIZE, BLOCK_SIZE);
             }
         }
     }
 }
-bool check_no_collision(struct CurrentShape current)
-{
+bool check_no_collision(struct CurrentShape current) {
     for (int x = 0; x < 4; ++x) {
         for (int y = 0; y < 4; ++y) {
             if (current.shape->bitmap[current.numState][y][x]) {
@@ -182,8 +172,7 @@ bool check_no_collision(struct CurrentShape current)
     return true;
 }
 
-void imprint(struct CurrentShape current)
-{
+void imprint(struct CurrentShape current) {
     for (size_t x = 0; x < 4; ++x) {
         for (size_t y = 0; y < 4; ++y) {
             if (current.shape->bitmap[current.numState][y][x]) {
@@ -194,8 +183,7 @@ void imprint(struct CurrentShape current)
     }
 }
 
-void moveShape(struct CurrentShape *current)
-{
+void moveShape(struct CurrentShape *current) {
     current->y--;
     if (check_no_collision(*current)) {
     } else {
@@ -206,10 +194,9 @@ void moveShape(struct CurrentShape *current)
     score++;
 }
 
-void InitGameBoard()
-{
+void InitGameBoard() {
     /* Intializes random number generator */
-    srand((unsigned) time(NULL));
+    srand((unsigned)time(NULL));
 
     for (size_t x = 0; x < 10; ++x) {
         for (size_t y = 0; y < 20; ++y) {
@@ -219,8 +206,7 @@ void InitGameBoard()
     }
 }
 
-void moveLines(int to, int from)
-{
+void moveLines(int to, int from) {
     assert(to < from);
     int target = to;
     for (int y = from; y < 20; ++y) {
@@ -232,8 +218,7 @@ void moveLines(int to, int from)
     }
 }
 
-void clearLines()
-{
+void clearLines() {
     int maximum_height = 20;
     int cleared = 0;
     for (int i = 0; i < maximum_height; i++) {
@@ -255,8 +240,7 @@ void clearLines()
     score += cleared * cleared * 50;
 }
 
-void NewPiece(struct CurrentShape *current)
-{
+void NewPiece(struct CurrentShape *current) {
     current->shape = Shapes[rand() % 7];
     current->x = 4;
     current->y = 16;
@@ -267,8 +251,7 @@ void NewPiece(struct CurrentShape *current)
     clearLines();
 }
 
-void do_wall_kick(struct CurrentShape *current)
-{
+void do_wall_kick(struct CurrentShape *current) {
     int direction = (current->x < 5) ? 1 : -1;
 
     for (int i = 0; i < 3; ++i) {
@@ -281,8 +264,7 @@ void do_wall_kick(struct CurrentShape *current)
     current->numState = (current->numState + 3) % 4;
 }
 
-void help()
-{
+void help() {
     printf("keyboard options:\n");
     printf("\t-q, --qwerty\t set qwerty keyboards\n");
     printf("\t-d, --dvorak\t set dvorak keyboards\n");
@@ -291,8 +273,7 @@ void help()
     printf("Use 'q' ingame to exit the game\n");
     exit(0);
 }
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     if (argc > 2) {
         fprintf(stderr, "UNRECOGNIZED OPTIONS!\nUse -h or --help for help\n");
         exit(1);
@@ -303,15 +284,18 @@ int main(int argc, char *argv[])
         }
         if (strcmp(argv[1], "-d") == 0 || strcmp(argv[1], "--dvorak") == 0) {
             setDvorak();
-            printf("Dvorak bindings set!\nrotate - '.'\ndown - 'e'\nleft - 'o'\nright - 'u'\n");
+            printf("Dvorak bindings set!\nrotate - '.'\ndown - 'e'\nleft - "
+                   "'o'\nright - 'u'\n");
         }
         if (strcmp(argv[1], "-q") == 0 || strcmp(argv[1], "--qwerty") == 0) {
             setQwerty();
-            printf("Qwerty bindings set!\nrotate - 'w'\ndown - 's'\nleft - 'a'\nright - 'd'\n");
+            printf("Qwerty bindings set!\nrotate - 'w'\ndown - 's'\nleft - "
+                   "'a'\nright - 'd'\n");
         }
         if (strcmp(argv[1], "-a") == 0 || strcmp(argv[1], "--arrows") == 0) {
             setArrows();
-            printf("Qwerty bindings set!\nrotate - up arrow\ndown - down arrow\nleft - left arrow\nright - right arrow\n");
+            printf("Qwerty bindings set!\nrotate - up arrow\ndown - down arrow\nleft "
+                   "- left arrow\nright - right arrow\n");
         }
     }
     dpy = XOpenDisplay(NULL);
@@ -329,7 +313,9 @@ int main(int argc, char *argv[])
         printf("\n\tno appropriate visual found\n\n");
         exit(0);
     } else {
-        printf("\n\tvisual %p selected\n", (void *) vi->visualid); /* %p creates hexadecimal output like in glxinfo */
+        printf("\n\tvisual %p selected\n",
+            (void *)vi
+                ->visualid); /* %p creates hexadecimal output like in glxinfo */
     }
 
     cmap = XCreateColormap(dpy, root, vi->visual, AllocNone);
@@ -337,7 +323,8 @@ int main(int argc, char *argv[])
     swa.colormap = cmap;
     swa.event_mask = ExposureMask | KeyPressMask;
 
-    win = XCreateWindow(dpy, root, 0, 0, 480, 640, 0, vi->depth, InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
+    win = XCreateWindow(dpy, root, 0, 0, 480, 640, 0, vi->depth, InputOutput,
+        vi->visual, CWColormap | CWEventMask, &swa);
 
     XMapWindow(dpy, win);
     XStoreName(dpy, win, "KlimTris");
@@ -421,7 +408,7 @@ int main(int argc, char *argv[])
         glXSwapBuffers(dpy, win);
         gettimeofday(&stop, NULL);
 
-        secs = (double) (stop.tv_usec - last.tv_usec) / 1000000 + (double) (stop.tv_sec - last.tv_sec);
+        secs = (double)(stop.tv_usec - last.tv_usec) / 1000000 + (double)(stop.tv_sec - last.tv_sec);
 
         if (secs > 1) {
             last = stop;

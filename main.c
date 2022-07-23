@@ -31,7 +31,7 @@ XEvent xev;
 bool GameOver = false;
 int score = 0;
 
-int keycodes[4] = { 113, 114, 111, 116 };
+unsigned keycodes[4] = { 113, 114, 111, 116 };
 
 void setDvorak() {
     keycodes[0] = 32;

@@ -21,5 +21,5 @@ Use 'q' ingame to exit the game
 
 ## Screenshot
 
-![](https://k11m1.eu/imgs/klimtris_demo1.png)
+![](https://k11m1.eu/public_images/klimtris_readme_screenshot.png)
 
